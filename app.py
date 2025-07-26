@@ -101,12 +101,11 @@ with main_col:
     with cols[0]:
         num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
     with cols[1]:
-        st.write("料理の難易度", inline=True)
         difficulty = st.radio(
-            "",  # ラベルを空に
+            "料理の難易度",
             ["簡単な料理", "ちょっと手間のかかる料理"],
             index=0,
-            horizontal=True
+            horizontal=True  # 横並びで分かりやすく
         )
 
     user_question = st.text_input("料理に関する質問を入力してください:")
