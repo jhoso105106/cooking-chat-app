@@ -101,17 +101,18 @@ with main_col:
     with cols[0]:
         num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
     with cols[1]:
+        st.write("料理の難易度", inline=True)
         difficulty = st.radio(
-            "料理の難易度",
+            "",  # ラベルを空に
             ["簡単な料理", "ちょっと手間のかかる料理"],
             index=0,
-            horizontal=True  # 横並びで分かりやすく
+            horizontal=True
         )
 
     user_question = st.text_input("料理に関する質問を入力してください:")
 
     if user_question:
-        with st.spinner("AIが考え中..."):
+        with st.spinner("AIが考中..."):
             try:
                 prompt = f"""{user_question}（{num_people}人分、{difficulty}で教えて。料理に合うお勧めのデザートや飲み物も提案してください）"""
                 response = client.chat.completions.create(
