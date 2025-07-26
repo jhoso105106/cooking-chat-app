@@ -87,7 +87,7 @@ if user_question:
             # Gmail送信用リンクを作成
             subject = "料理の材料と作り方"
             # 本文を最大2000文字程度に制限（必要に応じて調整）
-            short_answer = answer[:2000]
+            short_answer = answer[:1000]
             body = urllib.parse.quote(short_answer)
             gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&to=&su={urllib.parse.quote(subject)}&body={body}"
 
