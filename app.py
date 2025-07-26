@@ -84,15 +84,14 @@ if user_question:
             answer = response.choices[0].message.content
             st.write(f"AIの回答: {answer}")
 
-            # メール送信用 mailtoリンクを作成（URLエンコードを強化）
+            # Gmail送信用リンクを作成
             subject = "料理の材料と作り方"
             body = urllib.parse.quote(answer)
-            mailto_link = f"mailto:?subject={urllib.parse.quote(subject)}&body={body}"
+            gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&to=&su={urllib.parse.quote(subject)}&body={body}"
 
-            # ボタン風リンク（aタグのみで実装）
             st.markdown(
                 f'''
-                <a href="{mailto_link}" style="
+                <a href="{gmail_link}" target="_blank" style="
                     display:inline-block;
                     padding:8px 16px;
                     font-size:16px;
@@ -103,7 +102,7 @@ if user_question:
                     text-decoration:none;
                     font-weight:bold;
                     margin-top:10px;
-                ">📧 メールで送る</a>
+                ">📧 Gmailで送る</a>
                 ''',
                 unsafe_allow_html=True
             )
