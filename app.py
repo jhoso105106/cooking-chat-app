@@ -89,8 +89,22 @@ if user_question:
             body = urllib.parse.quote(answer)
             mailto_link = f"mailto:?subject={urllib.parse.quote(subject)}&body={body}"
 
+            # ボタン風リンク（aタグのみで実装）
             st.markdown(
-                f'<a href="{mailto_link}"><button style="padding:8px 16px;font-size:16px;">📧 メールで送る</button></a>',
+                f'''
+                <a href="{mailto_link}" style="
+                    display:inline-block;
+                    padding:8px 16px;
+                    font-size:16px;
+                    background:#1976d2;
+                    color:#fff;
+                    border:none;
+                    border-radius:6px;
+                    text-decoration:none;
+                    font-weight:bold;
+                    margin-top:10px;
+                ">📧 メールで送る</a>
+                ''',
                 unsafe_allow_html=True
             )
 
