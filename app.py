@@ -59,6 +59,8 @@ client = openai.AzureOpenAI(
 # メインとサイドの2カラムを作成
 main_col, fav_col = st.columns([3, 2])
 
+answer = ""  # ← 追加：グローバルで初期化
+
 with main_col:
     cols = st.columns([2, 3, 1, 1, 1])  # 1番目のカラムを2倍、2番目を3倍の幅に
 
@@ -142,7 +144,7 @@ with main_col:
 with fav_col:
     st.subheader("🍽 食べられるお店を探す")
     # メニュー名をAI回答から抽出（例：最初の行をメニュー名と仮定）
-    menu_name = answer.split('\n')[0].replace("【", "").replace("】", "").replace("メニュー", "").strip() if 'answer' in locals() else ""
+    menu_name = answer.split('\n')[0].replace("【", "").replace("】", "").replace("メニュー", "").strip() if answer else ""
     if menu_name:
         # Google検索・食べログ検索のURLを作成
         google_url = f"https://www.google.com/search?q={urllib.parse.quote(menu_name + ' レストラン')}"
@@ -155,7 +157,7 @@ with fav_col:
     st.subheader("🛒 ネットスーパーで材料を探す")
     # 材料リストをAI回答から抽出（例：'材料'以降の行を抽出）
     ingredients = []
-    if 'answer' in locals():
+    if answer:
         match = re.search(r"材料.*?\n((?:- .*\n)+)", answer)
         if match:
             ingredients = [line.replace("- ", "").strip() for line in match.group(1).split("\n") if line.strip()]
