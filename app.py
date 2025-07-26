@@ -54,7 +54,9 @@ client = openai.AzureOpenAI(
     api_version="2024-02-15-preview"
 )
 
-num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
+cols = st.columns(5)
+with cols[0]:
+    num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
 user_question = st.text_input("料理に関する質問を入力してください:")
 if user_question:
     with st.spinner("AIが考え中..."):
