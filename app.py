@@ -55,81 +55,93 @@ client = openai.AzureOpenAI(
     api_version="2024-02-15-preview"
 )
 
-cols = st.columns([2, 3, 1, 1, 1])  # 1番目のカラムを2倍、2番目を3倍の幅に
+# メインとサイドの2カラムを作成
+main_col, fav_col = st.columns([3, 2])
 
-with cols[0]:
-    num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
-with cols[1]:
-    difficulty = st.radio(
-        "料理の難易度",
-        ["簡単な料理", "ちょっと手間のかかる料理"],
-        index=0,
-        horizontal=True  # 横並びで表示
-    )
+with main_col:
+    cols = st.columns([2, 3, 1, 1, 1])  # 1番目のカラムを2倍、2番目を3倍の幅に
 
-user_question = st.text_input("料理に関する質問を入力してください:")
+    with cols[0]:
+        num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
+    with cols[1]:
+        difficulty = st.radio(
+            "料理の難易度",
+            ["簡単な料理", "ちょっと手間のかかる料理"],
+            index=0,
+            horizontal=True  # 横並びで表示
+        )
 
-if user_question:
-    with st.spinner("AIが考え中..."):
-        try:
-            # デザートや飲み物もおすすめするように指示を追加
-            prompt = f"""{user_question}（{num_people}人分、{difficulty}で教えて。料理に合うお勧めのデザートや飲み物も提案してください）"""
-            response = client.chat.completions.create(
-                model=deployment_name,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            )
-            answer = response.choices[0].message.content
-            st.write(f"AIの回答: {answer}")
+    user_question = st.text_input("料理に関する質問を入力してください:")
 
-            # --- 星評価 ---
-            st.subheader("このメニューの評価")
-            rating = st.slider("星を付けて評価してください", 1, 5, 3, format="%d⭐")
-            st.write(f"あなたの評価: {'⭐'*rating}")
+    if user_question:
+        with st.spinner("AIが考え中..."):
+            try:
+                # デザートや飲み物もおすすめするように指示を追加
+                prompt = f"""{user_question}（{num_people}人分、{difficulty}で教えて。料理に合うお勧めのデザートや飲み物も提案してください）"""
+                response = client.chat.completions.create(
+                    model=deployment_name,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ]
+                )
+                answer = response.choices[0].message.content
+                st.write(f"AIの回答: {answer}")
 
-            # --- お気に入り登録 ---
-            if "favorites" not in st.session_state:
-                st.session_state.favorites = set()
-            fav_key = f"fav_{answer[:30]}"  # 回答の先頭30文字でユニークキー
+                # --- 星評価 ---
+                st.subheader("このメニューの評価")
+                rating = st.slider("星を付けて評価してください", 1, 5, 3, format="%d⭐")
+                st.write(f"あなたの評価: {'⭐'*rating}")
 
-            if fav_key in st.session_state.favorites:
-                if st.button("★ お気に入り解除"):
-                    st.session_state.favorites.remove(fav_key)
-                    st.success("お気に入りから解除しました")
+                # --- お気に入り登録 ---
+                if "favorites" not in st.session_state:
+                    st.session_state.favorites = set()
+                fav_key = f"fav_{answer[:30]}"  # 回答の先頭30文字でユニークキー
+
+                if fav_key in st.session_state.favorites:
+                    if st.button("★ お気に入り解除"):
+                        st.session_state.favorites.remove(fav_key)
+                        st.success("お気に入りから解除しました")
+                    else:
+                        st.info("お気に入り登録済み")
                 else:
-                    st.info("お気に入り登録済み")
-            else:
-                if st.button("☆ お気に入り登録"):
-                    st.session_state.favorites.add(fav_key)
-                    st.success("お気に入りに登録しました")
+                    if st.button("☆ お気に入り登録"):
+                        st.session_state.favorites.add(fav_key)
+                        st.success("お気に入りに登録しました")
 
-            # --- Gmail送信ボタン（そのまま） ---
-            subject = "料理の材料と作り方"
-            short_answer = answer[:1000]
-            body = urllib.parse.quote(short_answer)
-            gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&to=&su={urllib.parse.quote(subject)}&body={body}"
+                # --- Gmail送信ボタン（そのまま） ---
+                subject = "料理の材料と作り方"
+                short_answer = answer[:1000]
+                body = urllib.parse.quote(short_answer)
+                gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&to=&su={urllib.parse.quote(subject)}&body={body}"
 
-            st.markdown(
-                f'''
-                <a href="{gmail_link}" target="_blank" style="
-                    display:inline-block;
-                    padding:8px 16px;
-                    font-size:16px;
-                    background:#1976d2;
-                    color:#fff;
-                    border:none;
-                    border-radius:6px;
-                    text-decoration:none;
-                    font-weight:bold;
-                    margin-top:10px;
-                ">📧 Gmailで送る</a>
-                ''',
-                unsafe_allow_html=True
-            )
+                st.markdown(
+                    f'''
+                    <a href="{gmail_link}" target="_blank" style="
+                        display:inline-block;
+                        padding:8px 16px;
+                        font-size:16px;
+                        background:#1976d2;
+                        color:#fff;
+                        border:none;
+                        border-radius:6px;
+                        text-decoration:none;
+                        font-weight:bold;
+                        margin-top:10px;
+                    ">📧 Gmailで送る</a>
+                    ''',
+                    unsafe_allow_html=True
+                )
 
-        except Exception as e:
-            st.error(f"エラーが発生しました: {str(e)}")
+            except Exception as e:
+                st.error(f"エラーが発生しました: {str(e)}")
+
+with fav_col:
+    st.subheader("⭐ お気に入りリスト")
+    if "favorites" in st.session_state and st.session_state.favorites:
+        for fav in st.session_state.favorites:
+            st.markdown(f"- {fav}")
+    else:
+        st.write("お気に入りはまだありません。")
