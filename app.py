@@ -54,11 +54,17 @@ client = openai.AzureOpenAI(
     api_version="2024-02-15-preview"
 )
 
-cols = st.columns(5)
+cols = st.columns([1, 3, 1, 1, 1])  # 2番目のカラムを3倍の幅に
+
 with cols[0]:
     num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
 with cols[1]:
-    difficulty = st.radio("料理の難易度", ["簡単な料理", "ちょっと手間のかかる料理"], index=0)
+    difficulty = st.radio(
+        "料理の難易度",
+        ["簡単な料理", "ちょっと手間のかかる料理"],
+        index=0,
+        horizontal=True  # 横並びで表示
+    )
 
 user_question = st.text_input("料理に関する質問を入力してください:")
 
