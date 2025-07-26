@@ -72,21 +72,22 @@ user_question = st.text_input("料理に関する質問を入力してくださ�
 if user_question:
     with st.spinner("AIが考え中..."):
         try:
+            # デザートや飲み物もおすすめするように指示を追加
+            prompt = f"""{user_question}（{num_people}人分、{difficulty}で教えて。料理に合うお勧めのデザートや飲み物も提案してください）"""
             response = client.chat.completions.create(
                 model=deployment_name,
                 messages=[
                     {
                         "role": "user",
-                        "content": f"{user_question}（{num_people}人分、{difficulty}で教えて）"
+                        "content": prompt
                     }
                 ]
             )
             answer = response.choices[0].message.content
             st.write(f"AIの回答: {answer}")
 
-            # Gmail送信用リンクを作成
+            # Gmail送信用リンクを作成（以下はそのまま）
             subject = "料理の材料と作り方"
-            # 本文を最大2000文字程度に制限（必要に応じて調整）
             short_answer = answer[:1000]
             body = urllib.parse.quote(short_answer)
             gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&to=&su={urllib.parse.quote(subject)}&body={body}"
