@@ -99,6 +99,21 @@ with main_col:
     cols = st.columns([2, 3, 1, 1, 1])  # 1番目のカラムを2倍、2番目を3倍の幅に
 
     with cols[0]:
+        st.markdown(
+            """
+            <style>
+            /* selectboxの親divに枠線を付ける */
+            div[data-testid="stSelectbox"] {
+                border: 2px solid #1976d2;
+                border-radius: 8px;
+                padding: 8px 4px;
+                background: #fff;
+                margin-bottom: 8px;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
         num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
     with cols[1]:
         difficulty = st.radio(
