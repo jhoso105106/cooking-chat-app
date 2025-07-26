@@ -178,7 +178,7 @@ with main_col:
                         st.session_state.favorites.add(fav_key)
                         st.success("お気に入りに登録しました")
 
-                # --- Gmail送信ボタン（タイトル横ではなく、ここに表示） ---
+                # --- Gmail送信ボタン ---
                 subject = "料理の材料と作り方"
                 short_answer = answer[:1000]
                 body = urllib.parse.quote(short_answer)
@@ -200,6 +200,129 @@ with main_col:
                     ''',
                     unsafe_allow_html=True
                 )
+
+                # --- 材料費算出ボタン ---
+                if st.button("💰 材料費を算出"):
+                    st.subheader("🛒 材料費の詳細")
+                    
+                    # 材料リストを抽出
+                    ingredients = []
+                    if answer:
+                        match = re.search(r"材料.*?\n((?:- .*\n)+)", answer)
+                        if match:
+                            ingredients = [line.replace("- ", "").strip() for line in match.group(1).split("\n") if line.strip()]
+                    
+                    # 材料の概算価格辞書
+                    price_dict = {
+                        "玉ねぎ": 150,
+                        "にんじん": 120,
+                        "じゃがいも": 200,
+                        "豚肉": 400,
+                        "鶏肉": 300,
+                        "牛肉": 600,
+                        "米": 250,
+                        "卵": 250,
+                        "醤油": 200,
+                        "味噌": 300,
+                        "塩": 100,
+                        "砂糖": 180,
+                        "キャベツ": 200,
+                        "トマト": 300,
+                        "きゅうり": 150,
+                        "大根": 180,
+                        "白菜": 250,
+                        "ピーマン": 200,
+                        "もやし": 50,
+                        "豆腐": 100,
+                        "油": 300,
+                        "バター": 400,
+                        "牛乳": 200,
+                        "チーズ": 350,
+                        "パン": 150,
+                        "麺": 120
+                    }
+                    
+                    total_cost = 0
+                    price_details = []
+                    
+                    if ingredients:
+                        # 材料費一覧表を作成
+                        st.write("**材料別価格一覧表：**")
+                        
+                        # テーブル形式で表示
+                        import pandas as pd
+                        
+                        table_data = []
+                        for item in ingredients:
+                            # 材料名から価格を推定（部分一致）
+                            estimated_price = 150  # デフォルト価格
+                            matched_key = "その他"
+                            
+                            for key, price in price_dict.items():
+                                if key in item:
+                                    estimated_price = price
+                                    matched_key = key
+                                    break
+                            
+                            total_cost += estimated_price
+                            
+                            # 価格比較サイトのURL生成
+                            search_url = f"https://kakaku.com/search_results/{urllib.parse.quote(item)}/"
+                            
+                            table_data.append({
+                                "材料名": item,
+                                "推定価格": f"¥{estimated_price}",
+                                "参考": f"[価格を確認]({search_url})"
+                            })
+                        
+                        # DataFrameで表示
+                        df = pd.DataFrame(table_data)
+                        st.dataframe(df, use_container_width=True)
+                        
+                        # 合計金額をハイライト表示
+                        st.markdown(
+                            f"""
+                            <div style="
+                                background-color: #f0f8ff;
+                                border: 2px solid #1976d2;
+                                border-radius: 10px;
+                                padding: 20px;
+                                text-align: center;
+                                margin: 20px 0;
+                            ">
+                                <h3 style="color: #1976d2; margin: 0;">
+                                    💰 合計概算費用: ¥{total_cost:,}
+                                </h3>
+                                <p style="margin: 10px 0; color: #666;">
+                                    ({num_people}人分)
+                                </p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        
+                        # 一人当たりの費用
+                        per_person_cost = total_cost // num_people
+                        st.info(f"一人当たりの費用: 約¥{per_person_cost}")
+                        
+                        # 参考情報
+                        st.subheader("📋 価格参考サイト")
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            st.markdown("- [価格.com](https://kakaku.com/)")
+                            st.markdown("- [楽天市場](https://www.rakuten.co.jp/)")
+                        with col2:
+                            st.markdown("- [Amazon](https://www.amazon.co.jp/)")
+                            st.markdown("- [Yahoo!ショッピング](https://shopping.yahoo.co.jp/)")
+                        with col3:
+                            st.markdown("- [イオンネットスーパー](https://shop.aeon.com/netsuper/)")
+                            st.markdown("- [楽天西友](https://sm.rakuten.co.jp/)")
+                        
+                        st.warning("※ 価格は概算です。実際の価格や在庫状況は各サイトでご確認ください。")
+                        
+                    else:
+                        st.error("材料リストが見つかりませんでした。AIの回答に材料が含まれていない可能性があります。")
 
             except Exception as e:
                 st.error(f"エラーが発生しました: {str(e)}")
