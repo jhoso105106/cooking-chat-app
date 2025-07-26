@@ -44,6 +44,8 @@ set_bg("background.png")
 # タイトルとGmailボタンを横並びに表示
 title_col, mail_col = st.columns([5, 1])
 
+answer = ""  # 先に初期化
+
 with title_col:
     st.title("🍳 料理チャットアプリ")
 with mail_col:
@@ -141,6 +143,29 @@ with main_col:
                     if st.button("☆ お気に入り登録"):
                         st.session_state.favorites.add(fav_key)
                         st.success("お気に入りに登録しました")
+
+                # --- Gmail送信ボタン（タイトル横ではなく、ここに表示） ---
+                subject = "料理の材料と作り方"
+                short_answer = answer[:1000]
+                body = urllib.parse.quote(short_answer)
+                gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&to=&su={urllib.parse.quote(subject)}&body={body}"
+                st.markdown(
+                    f'''
+                    <a href="{gmail_link}" target="_blank" style="
+                        display:inline-block;
+                        padding:8px 16px;
+                        font-size:16px;
+                        background:#1976d2;
+                        color:#fff;
+                        border:none;
+                        border-radius:6px;
+                        text-decoration:none;
+                        font-weight:bold;
+                        margin-top:24px;
+                    ">📧 Gmailで送る</a>
+                    ''',
+                    unsafe_allow_html=True
+                )
 
             except Exception as e:
                 st.error(f"エラーが発生しました: {str(e)}")
