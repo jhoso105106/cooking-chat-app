@@ -58,7 +58,7 @@ cols = st.columns(5)
 with cols[0]:
     num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
 with cols[1]:
-    difficulty = st.selectbox("料理の難易度", ["簡単な料理", "ちょっと手間のかかる料理"], index=0)
+    difficulty = st.radio("料理の難易度", ["簡単な料理", "ちょっと手間のかかる料理"], index=0)
 
 user_question = st.text_input("料理に関する質問を入力してください:")
 
