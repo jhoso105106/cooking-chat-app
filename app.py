@@ -86,7 +86,28 @@ if user_question:
             answer = response.choices[0].message.content
             st.write(f"AIの回答: {answer}")
 
-            # Gmail送信用リンクを作成（以下はそのまま）
+            # --- 星評価 ---
+            st.subheader("このメニューの評価")
+            rating = st.slider("星を付けて評価してください", 1, 5, 3, format="%d⭐")
+            st.write(f"あなたの評価: {'⭐'*rating}")
+
+            # --- お気に入り登録 ---
+            if "favorites" not in st.session_state:
+                st.session_state.favorites = set()
+            fav_key = f"fav_{answer[:30]}"  # 回答の先頭30文字でユニークキー
+
+            if fav_key in st.session_state.favorites:
+                if st.button("★ お気に入り解除"):
+                    st.session_state.favorites.remove(fav_key)
+                    st.success("お気に入りから解除しました")
+                else:
+                    st.info("お気に入り登録済み")
+            else:
+                if st.button("☆ お気に入り登録"):
+                    st.session_state.favorites.add(fav_key)
+                    st.success("お気に入りに登録しました")
+
+            # --- Gmail送信ボタン（そのまま） ---
             subject = "料理の材料と作り方"
             short_answer = answer[:1000]
             body = urllib.parse.quote(short_answer)
