@@ -151,8 +151,13 @@ st.markdown(
     <style>
     .main .block-container {
         max-width: 100vw !important;
-        padding-left: 2vw;
-        padding-right: 2vw;
+        width: 100vw !important;
+        padding-left: 0vw !important;
+        padding-right: 0vw !important;
+    }
+    .stApp {
+        padding: 0 !important;
+        margin: 0 !important;
     }
     </style>
     """,
