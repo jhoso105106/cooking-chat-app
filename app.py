@@ -3,6 +3,7 @@ import openai
 import base64
 import os
 import urllib.parse
+import re
 
 
 # 背景画像の設定
@@ -150,6 +151,25 @@ with fav_col:
         st.markdown(f"- [食べログで「{menu_name}」のお店を探す]({tabelog_url})")
     else:
         st.write("メニューが決まると、お店検索リンクが表示されます。")
+
+    st.subheader("🛒 ネットスーパーで材料を探す")
+    # 材料リストをAI回答から抽出（例：'材料'以降の行を抽出）
+    ingredients = []
+    if 'answer' in locals():
+        match = re.search(r"材料.*?\n((?:- .*\n)+)", answer)
+        if match:
+            ingredients = [line.replace("- ", "").strip() for line in match.group(1).split("\n") if line.strip()]
+    if ingredients:
+        for item in ingredients:
+            # 例：イオンネットスーパーで検索
+            aeon_url = f"https://shop.aeon.com/netsuper/search/?keyword={urllib.parse.quote(item)}"
+            seiyu_url = f"https://sm.rakuten.co.jp/search/?q={urllib.parse.quote(item)}"
+            amazon_url = f"https://www.amazon.co.jp/s?k={urllib.parse.quote(item)}&i=grocery"
+            st.markdown(
+                f"- {item} [イオンで探す]({aeon_url}) / [西友で探す]({seiyu_url}) / [Amazonで探す]({amazon_url})"
+            )
+    else:
+        st.write("メニューが決まると、材料のネットスーパー検索リンクが表示されます。")
 
 st.markdown(
     """
