@@ -296,14 +296,10 @@ with main_col:
                             
                             total_cost += estimated_price
                             
-                            # 価格比較サイトのURL生成
-                            search_url = f"https://kakaku.com/search_results/{urllib.parse.quote(item)}/"
-                            
                             table_data.append({
                                 "材料名": item,
                                 "推定価格": f"¥{estimated_price}",
-                                "マッチング": matched_key,
-                                "参考": f"[価格を確認]({search_url})"
+                                "マッチング": matched_key
                             })
                         
                         # DataFrameで表示
@@ -336,21 +332,7 @@ with main_col:
                         per_person_cost = total_cost // num_people if num_people > 0 else total_cost
                         st.info(f"一人当たりの費用: 約¥{per_person_cost}")
                         
-                        # 参考情報
-                        st.subheader("📋 価格参考サイト")
-                        col1, col2, col3 = st.columns(3)
-                        
-                        with col1:
-                            st.markdown("- [価格.com](https://kakaku.com/)")
-                            st.markdown("- [楽天市場](https://www.rakuten.co.jp/)")
-                        with col2:
-                            st.markdown("- [Amazon](https://www.amazon.co.jp/)")
-                            st.markdown("- [Yahoo!ショッピング](https://shopping.yahoo.co.jp/)")
-                        with col3:
-                            st.markdown("- [イオンネットスーパー](https://shop.aeon.com/netsuper/)")
-                            st.markdown("- [楽天西友](https://sm.rakuten.co.jp/)")
-                        
-                        st.warning("※ 価格は概算です。実際の価格や在庫状況は各サイトでご確認ください。")
+                        st.warning("※ 価格は概算です。実際の価格は各ショッピングサイトでご確認ください。")
                         
                     else:
                         st.error("材料リストが見つかりませんでした。AIの回答に材料が含まれていない可能性があります。")
