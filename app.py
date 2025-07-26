@@ -110,6 +110,14 @@ with main_col:
                 background: #fff;
                 margin-bottom: 8px;
             }
+            /* text inputの親divに枠線を付ける */
+            div[data-testid="stTextInput"] {
+                border: 2px solid #1976d2;
+                border-radius: 8px;
+                padding: 8px 4px;
+                background: #fff;
+                margin-bottom: 8px;
+            }
             </style>
             """,
             unsafe_allow_html=True
@@ -123,6 +131,7 @@ with main_col:
             horizontal=True  # 横並びで分かりやすく
         )
 
+    # ここで料理に関する質問のテキストボックスにも青い線がつきます
     user_question = st.text_input("料理に関する質問を入力してください:")
 
     if user_question:
