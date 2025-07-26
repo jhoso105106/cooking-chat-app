@@ -138,14 +138,18 @@ with main_col:
             except Exception as e:
                 st.error(f"エラーが発生しました: {str(e)}")
 
-# --- お気に入りリストの表示部分を削除 ---
-# with fav_col:
-#     st.subheader("⭐ お気に入りリスト")
-#     if "favorites" in st.session_state and st.session_state.favorites:
-#         for fav in st.session_state.favorites:
-#             st.markdown(f"- {fav}")
-#     else:
-#         st.write("お気に入りはまだありません。")
+with fav_col:
+    st.subheader("🍽 食べられるお店を探す")
+    # メニュー名をAI回答から抽出（例：最初の行をメニュー名と仮定）
+    menu_name = answer.split('\n')[0].replace("【", "").replace("】", "").replace("メニュー", "").strip() if 'answer' in locals() else ""
+    if menu_name:
+        # Google検索・食べログ検索のURLを作成
+        google_url = f"https://www.google.com/search?q={urllib.parse.quote(menu_name + ' レストラン')}"
+        tabelog_url = f"https://tabelog.com/rstLst/?vs=1&sa={urllib.parse.quote(menu_name)}"
+        st.markdown(f"- [Googleで「{menu_name}」が食べられるお店を探す]({google_url})")
+        st.markdown(f"- [食べログで「{menu_name}」のお店を探す]({tabelog_url})")
+    else:
+        st.write("メニューが決まると、お店検索リンクが表示されます。")
 
 st.markdown(
     """
