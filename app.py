@@ -2,6 +2,7 @@ import streamlit as st
 import openai
 import base64
 import os
+import urllib.parse
 
 
 # 背景画像の設定
@@ -83,12 +84,15 @@ if user_question:
             answer = response.choices[0].message.content
             st.write(f"AIの回答: {answer}")
 
-            # メール送信用 mailtoリンクを作成
+            # メール送信用 mailtoリンクを作成（URLエンコードを強化）
             subject = "料理の材料と作り方"
-            body = answer.replace('\n', '%0D%0A')  # 改行をURLエンコード
-            mailto_link = f"mailto:?subject={subject}&body={body}"
+            body = urllib.parse.quote(answer)
+            mailto_link = f"mailto:?subject={urllib.parse.quote(subject)}&body={body}"
 
-            st.markdown(f"[📧 メールで送る]({mailto_link})", unsafe_allow_html=True)
+            st.markdown(
+                f'<a href="{mailto_link}"><button style="padding:8px 16px;font-size:16px;">📧 メールで送る</button></a>',
+                unsafe_allow_html=True
+            )
 
         except Exception as e:
             st.error(f"エラーが発生しました: {str(e)}")
