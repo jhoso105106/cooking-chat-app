@@ -54,7 +54,7 @@ client = openai.AzureOpenAI(
     api_version="2024-02-15-preview"
 )
 
-cols = st.columns([1, 3, 1, 1, 1])  # 2番目のカラムを3倍の幅に
+cols = st.columns([2, 3, 1, 1, 1])  # 1番目のカラムを2倍、2番目を3倍の幅に
 
 with cols[0]:
     num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
