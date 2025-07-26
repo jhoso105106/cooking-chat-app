@@ -149,12 +149,12 @@ with fav_col:
 st.markdown(
     """
     <style>
-    /* Streamlit 1.10以降の横幅最大化 */
+    /* 横幅を広げつつ、左右に適度な余白を作る */
     .block-container {
-        max-width: 100vw !important;
-        width: 100vw !important;
-        padding-left: 1vw !important;
-        padding-right: 1vw !important;
+        max-width: 90vw !important;
+        width: 90vw !important;
+        padding-left: 5vw !important;
+        padding-right: 5vw !important;
     }
     .stApp {
         padding: 0 !important;
