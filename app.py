@@ -88,7 +88,7 @@ client = openai.AzureOpenAI(
 # メインとサイドの2カラムを作成
 main_col, fav_col = st.columns([3, 2])
 
-answer = ""  # ← 追加：グローバルで初期化
+answer = ""  # グローバルで初期化
 
 with main_col:
     cols = st.columns([2, 3, 1, 1, 1])  # 1番目のカラムを2倍、2番目を3倍の幅に
@@ -100,7 +100,7 @@ with main_col:
             "料理の難易度",
             ["簡単な料理", "ちょっと手間のかかる料理"],
             index=0,
-            horizontal=True  # 横並びで表示
+            horizontal=True
         )
 
     user_question = st.text_input("料理に関する質問を入力してください:")
@@ -108,7 +108,6 @@ with main_col:
     if user_question:
         with st.spinner("AIが考え中..."):
             try:
-                # デザートや飲み物もおすすめするように指示を追加
                 prompt = f"""{user_question}（{num_people}人分、{difficulty}で教えて。料理に合うお勧めのデザートや飲み物も提案してください）"""
                 response = client.chat.completions.create(
                     model=deployment_name,
@@ -130,7 +129,7 @@ with main_col:
                 # --- お気に入り登録 ---
                 if "favorites" not in st.session_state:
                     st.session_state.favorites = set()
-                fav_key = f"fav_{answer[:30]}"  # 回答の先頭30文字でユニークキー
+                fav_key = f"fav_{answer[:30]}"
 
                 if fav_key in st.session_state.favorites:
                     if st.button("★ お気に入り解除"):
@@ -148,10 +147,8 @@ with main_col:
 
 with fav_col:
     st.subheader("🍽 食べられるお店を探す")
-    # メニュー名をAI回答から抽出（例：最初の行をメニュー名と仮定）
     menu_name = answer.split('\n')[0].replace("【", "").replace("】", "").replace("メニュー", "").strip() if answer else ""
     if menu_name:
-        # Google検索・食べログ検索のURLを作成
         google_url = f"https://www.google.com/search?q={urllib.parse.quote(menu_name + ' レストラン')}"
         tabelog_url = f"https://tabelog.com/rstLst/?vs=1&sa={urllib.parse.quote(menu_name)}"
         st.markdown(f"- [Googleで「{menu_name}」が食べられるお店を探す]({google_url})")
@@ -160,7 +157,6 @@ with fav_col:
         st.write("メニューが決まると、お店検索リンクが表示されます。")
 
     st.subheader("🛒 ネットスーパーで材料を探す")
-    # 材料リストをAI回答から抽出（例：'材料'以降の行を抽出）
     ingredients = []
     if answer:
         match = re.search(r"材料.*?\n((?:- .*\n)+)", answer)
@@ -168,7 +164,6 @@ with fav_col:
             ingredients = [line.replace("- ", "").strip() for line in match.group(1).split("\n") if line.strip()]
     if ingredients:
         for item in ingredients:
-            # 例：イオンネットスーパーで検索
             aeon_url = f"https://shop.aeon.com/netsuper/search/?keyword={urllib.parse.quote(item)}"
             seiyu_url = f"https://sm.rakuten.co.jp/search/?q={urllib.parse.quote(item)}"
             amazon_url = f"https://www.amazon.co.jp/s?k={urllib.parse.quote(item)}&i=grocery"
