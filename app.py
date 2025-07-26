@@ -96,7 +96,7 @@ main_col, fav_col = st.columns([3, 2])
 answer = ""  # グローバルで初期化
 
 with main_col:
-    cols = st.columns([2, 3, 1, 1, 1])
+    cols = st.columns([2, 3, 1, 1, 1])  # 1番目のカラムを2倍、2番目を3倍の幅に
 
     with cols[0]:
         st.markdown(
@@ -136,16 +136,8 @@ with main_col:
             "料理の難易度",
             ["簡単な料理", "ちょっと手間のかかる料理"],
             index=0,
-            horizontal=True
+            horizontal=True  # 横並びで分かりやすく
         )
-
-    # --- クリアボタン ---
-    clear = st.button("選択をクリア")
-    if clear:
-        st.session_state["num_people"] = 0
-        st.session_state["difficulty"] = 0
-        st.session_state["user_question"] = ""
-        st.experimental_rerun()
 
     user_question = st.text_input("料理に関する質問を入力してください:", key="user_question")
 
