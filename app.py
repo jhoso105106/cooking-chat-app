@@ -145,3 +145,16 @@ with fav_col:
             st.markdown(f"- {fav}")
     else:
         st.write("お気に入りはまだありません。")
+
+st.markdown(
+    """
+    <style>
+    .main .block-container {
+        max-width: 100vw !important;
+        padding-left: 2vw;
+        padding-right: 2vw;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
