@@ -138,13 +138,14 @@ with main_col:
             except Exception as e:
                 st.error(f"エラーが発生しました: {str(e)}")
 
-with fav_col:
-    st.subheader("⭐ お気に入りリスト")
-    if "favorites" in st.session_state and st.session_state.favorites:
-        for fav in st.session_state.favorites:
-            st.markdown(f"- {fav}")
-    else:
-        st.write("お気に入りはまだありません。")
+# --- お気に入りリストの表示部分を削除 ---
+# with fav_col:
+#     st.subheader("⭐ お気に入りリスト")
+#     if "favorites" in st.session_state and st.session_state.favorites:
+#         for fav in st.session_state.favorites:
+#             st.markdown(f"- {fav}")
+#     else:
+#         st.write("お気に入りはまだありません。")
 
 st.markdown(
     """
