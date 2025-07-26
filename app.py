@@ -47,21 +47,23 @@ api_key = st.secrets["AZURE_OPENAI_API_KEY"]
 endpoint = st.secrets["AZURE_OPENAI_ENDPOINT"]
 deployment_name = st.secrets["AZURE_OPENAI_DEPLOYMENT"]
 
-openai.api_type = "azure"
-openai.api_key = api_key
-openai.api_base = endpoint
-openai.api_version = "2024-02-15-preview"
+# 新しいAzure OpenAIクライアントを作成
+client = openai.AzureOpenAI(
+    api_key=api_key,
+    azure_endpoint=endpoint,
+    api_version="2024-02-15-preview"
+)
 
 user_question = st.text_input("料理に関する質問を入力してください:")
 if user_question:
     with st.spinner("AIが考え中..."):
         try:
-            response = openai.ChatCompletion.create(
-                deployment_id=deployment_name,
+            response = client.chat.completions.create(
+                model=deployment_name,
                 messages=[
                     {"role": "user", "content": user_question}
                 ]
             )
-            st.write(f"AIの回答: {response['choices'][0]['message']['content']}")
+            st.write(f"AIの回答: {response.choices[0].message.content}")
         except Exception as e:
             st.error(f"エラーが発生しました: {str(e)}")
