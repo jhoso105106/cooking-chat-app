@@ -101,12 +101,16 @@ with main_col:
     with cols[0]:
         num_people = st.selectbox("何人分ですか？", [1, 2, 3, 4, 5], index=0)
     with cols[1]:
-        difficulty = st.radio(
-            "料理の難易度",
-            ["簡単な料理", "ちょっと手間のかかる料理"],
-            index=0,
-            horizontal=True  # 横並びにする
-        )
+        col1, col2 = st.columns(2)
+        if "difficulty" not in st.session_state:
+            st.session_state.difficulty = "簡単な料理"
+        with col1:
+            if st.button("簡単な料理", type="primary" if st.session_state.difficulty == "簡単な料理" else "secondary"):
+                st.session_state.difficulty = "簡単な料理"
+        with col2:
+            if st.button("ちょっと手間のかかる料理", type="primary" if st.session_state.difficulty == "ちょっと手間のかかる料理" else "secondary"):
+                st.session_state.difficulty = "ちょっと手間のかかる料理"
+        difficulty = st.session_state.difficulty
 
     user_question = st.text_input("料理に関する質問を入力してください:")
 
