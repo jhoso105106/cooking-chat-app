@@ -205,47 +205,76 @@ with main_col:
                 if st.button("💰 材料費を算出"):
                     st.subheader("🛒 材料費の詳細")
                     
-                    # 材料リストを抽出
+                    # 材料リストを抽出（複数のパターンに対応）
                     ingredients = []
                     if answer:
-                        match = re.search(r"材料.*?\n((?:- .*\n)+)", answer)
-                        if match:
-                            ingredients = [line.replace("- ", "").strip() for line in match.group(1).split("\n") if line.strip()]
+                        # パターン1: 「材料」セクションから抽出
+                        patterns = [
+                            r"材料.*?\n((?:- .*\n)+)",           # - リスト形式
+                            r"材料.*?\n((?:\d+\..*\n)+)",        # 1. 番号付きリスト
+                            r"材料.*?\n((?:・.*\n)+)",           # ・ リスト形式
+                            r"材料.*?[:：]\s*(.*?)(?:\n\n|\n作り方|\n手順|$)",  # : 以降の材料
+                        ]
+                        
+                        for pattern in patterns:
+                            match = re.search(pattern, answer, re.DOTALL | re.MULTILINE)
+                            if match:
+                                raw_ingredients = match.group(1).strip()
+                                # 行ごとに分割して材料を抽出
+                                for line in raw_ingredients.split('\n'):
+                                    line = line.strip()
+                                    if line and not line.startswith(('作り方', '手順', '調理法')):
+                                        # 先頭の記号や番号を除去
+                                        clean_line = re.sub(r'^[-・\d+\.\)]\s*', '', line)
+                                        if clean_line:
+                                            ingredients.append(clean_line)
+                                break
+                        
+                        # パターンが見つからない場合、全体から食材らしきものを抽出
+                        if not ingredients:
+                            # 一般的な食材名を含む行を抽出
+                            food_keywords = ['肉', '野菜', '魚', '米', '麺', '卵', '豆腐', '油', '醤油', '味噌', '塩', '砂糖', 
+                                           '玉ねぎ', 'にんじん', 'じゃがいも', 'キャベツ', 'トマト', 'ピーマン']
+                            
+                            for line in answer.split('\n'):
+                                line = line.strip()
+                                if any(keyword in line for keyword in food_keywords):
+                                    # 調理法や説明文を除外
+                                    if not any(exclude in line for exclude in ['炒める', '煮る', '焼く', '切る', '作り方', '手順']):
+                                        clean_line = re.sub(r'^[-・\d+\.\)]\s*', '', line)
+                                        if clean_line and len(clean_line) < 50:  # 長すぎる行は除外
+                                            ingredients.append(clean_line)
+            
+                    # デバッグ情報を表示
+                    if not ingredients:
+                        st.warning("材料の自動抽出に失敗しました。AI回答の形式を確認します...")
+                        with st.expander("AI回答の内容を確認"):
+                            st.text(answer)
+                        st.info("手動で材料を入力することもできます。")
+                        
+                        # 手動入力オプション
+                        manual_ingredients = st.text_area(
+                            "材料を手動で入力してください（1行に1つずつ）:",
+                            placeholder="例：\n玉ねぎ 1個\n豚肉 300g\n醤油 大さじ2"
+                        )
+                        if manual_ingredients:
+                            ingredients = [line.strip() for line in manual_ingredients.split('\n') if line.strip()]
                     
                     # 材料の概算価格辞書
                     price_dict = {
-                        "玉ねぎ": 150,
-                        "にんじん": 120,
-                        "じゃがいも": 200,
-                        "豚肉": 400,
-                        "鶏肉": 300,
-                        "牛肉": 600,
-                        "米": 250,
-                        "卵": 250,
-                        "醤油": 200,
-                        "味噌": 300,
-                        "塩": 100,
-                        "砂糖": 180,
-                        "キャベツ": 200,
-                        "トマト": 300,
-                        "きゅうり": 150,
-                        "大根": 180,
-                        "白菜": 250,
-                        "ピーマン": 200,
-                        "もやし": 50,
-                        "豆腐": 100,
-                        "油": 300,
-                        "バター": 400,
-                        "牛乳": 200,
-                        "チーズ": 350,
-                        "パン": 150,
-                        "麺": 120
+                        "玉ねぎ": 150, "にんじん": 120, "じゃがいも": 200, "豚肉": 400, "鶏肉": 300, 
+                        "牛肉": 600, "米": 250, "卵": 250, "醤油": 200, "味噌": 300, "塩": 100, 
+                        "砂糖": 180, "キャベツ": 200, "トマト": 300, "きゅうり": 150, "大根": 180, 
+                        "白菜": 250, "ピーマン": 200, "もやし": 50, "豆腐": 100, "油": 300, 
+                        "バター": 400, "牛乳": 200, "チーズ": 350, "パン": 150, "麺": 120,
+                        "ごま油": 350, "みりん": 250, "酢": 200, "小麦粉": 150, "片栗粉": 180
                     }
                     
                     total_cost = 0
-                    price_details = []
                     
                     if ingredients:
+                        st.success(f"材料を {len(ingredients)} 個検出しました:")
+                        
                         # 材料費一覧表を作成
                         st.write("**材料別価格一覧表：**")
                         
@@ -254,12 +283,13 @@ with main_col:
                         
                         table_data = []
                         for item in ingredients:
-                            # 材料名から価格を推定（部分一致）
+                            # 材料名から価格を推定（部分一致の精度向上）
                             estimated_price = 150  # デフォルト価格
                             matched_key = "その他"
                             
+                            # より柔軟な価格マッチング
                             for key, price in price_dict.items():
-                                if key in item:
+                                if key in item or item in key:
                                     estimated_price = price
                                     matched_key = key
                                     break
@@ -272,6 +302,7 @@ with main_col:
                             table_data.append({
                                 "材料名": item,
                                 "推定価格": f"¥{estimated_price}",
+                                "マッチング": matched_key,
                                 "参考": f"[価格を確認]({search_url})"
                             })
                         
@@ -302,7 +333,7 @@ with main_col:
                         )
                         
                         # 一人当たりの費用
-                        per_person_cost = total_cost // num_people
+                        per_person_cost = total_cost // num_people if num_people > 0 else total_cost
                         st.info(f"一人当たりの費用: 約¥{per_person_cost}")
                         
                         # 参考情報
