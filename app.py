@@ -24,7 +24,7 @@ def set_bg(png_file):
         background: #fff !important;
         border-radius: 8px;
         padding: 0.2em 0.5em;
-        display: inline-block;
+        display: inline;  /* ←ここをinline-blockからinlineに変更 */
     }}
     /* st.markdownで出力される材料リストなどにも背景色を適用 */
     .stApp ul, .stApp ol, .stApp li, .stApp pre, .stApp code {{
