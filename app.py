@@ -73,6 +73,9 @@ with mail_col:
             unsafe_allow_html=True
         )
 
+# ここでスペースを追加
+st.markdown("<br>", unsafe_allow_html=True)
+
 st.write("料理に関する質問をどうぞ！")
 
 # セキュリティのためst.secretsを利用
@@ -102,7 +105,7 @@ with main_col:
             "料理の難易度",
             ["簡単な料理", "ちょっと手間のかかる料理"],
             index=0,
-            horizontal=True
+            horizontal=True  # 横並びにする
         )
 
     user_question = st.text_input("料理に関する質問を入力してください:")
