@@ -448,7 +448,6 @@ with fav_col:
 # --- カロリー計算ボタン ---
 if st.button("🔥 カロリーを計算"):
     st.subheader("📊 カロリー詳細")
-            match = re.search(pattern, answer, re.DOTALL | re.MULTILINE)
 
     ingredients = []
     if answer:
@@ -481,14 +480,6 @@ if st.button("🔥 カロリーを計算"):
                         clean_line = re.sub(r'^[-・\d+\.\)]\s*', '', line)
                         if clean_line and len(clean_line) < 50:
                             ingredients.append(clean_line)
-                           '玉ねぎ', 'にんじん', 'じゃがいも', 'キャベツ', 'トマト', 'ピーマン']
-            for line in answer.split('\n'):
-                line = line.strip()
-                if any(keyword in line for keyword in food_keywords):
-                    if not any(exclude in line for exclude in ['炒める', '煮る', '焼く', '切る', '作り方', '手順']):
-                        clean_line = re.sub(r'^[-・\d+\.\)]\s*', '', line)
-                        if clean_line and len(clean_line) < 50:
-                            ingredients.append(clean_line)
 
     # 材料の概算カロリー辞書（100g/大さじ1あたりのカロリー）
     calorie_dict = {
@@ -506,7 +497,14 @@ if st.button("🔥 カロリーを計算"):
                 if key in ["醤油", "味噌", "酢", "みりん", "料理酒", "ケチャップ", "マヨネーズ", "ソース", "ごま油", "サラダ油", "オリーブオイル"]:
                     default_amount = 1
                 break
-        ingredient_amounts[item] = st.number_input(f"{item} の量 (gまたは大さじ)", min_value=0.0, value=float(default_amount), step=1.0, format="%f")
+        ingredient_amounts[item] = st.number_input(
+            f"{item} の量 (gまたは大さじ)",
+            min_value=0.0,
+            value=float(default_amount),
+            step=1.0,
+            format="%f",
+            key=f"amount_{item}"
+        )
 
     total_calories = 0
     table_data = []
@@ -567,9 +565,6 @@ if st.button("🔥 カロリーを計算"):
     st.warning("※ カロリーは概算です。実際の量や調理法で変動します。")
     if not ingredients:
         st.error("材料リストが見つかりませんでした。AIの回答に材料が含まれていない可能性があります。")
-                "基準量": serving_note,
-                "マッチング": matched_key
-            })
         
         # DataFrameで表示
         df = pd.DataFrame(table_data)
