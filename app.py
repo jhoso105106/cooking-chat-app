@@ -489,7 +489,7 @@ if st.button("🔥 カロリーを計算"):
     # 材料ごとの量入力欄を表示
     st.write("**材料ごとの量を入力してください（gまたは大さじ数）**")
     ingredient_amounts = {}
-    for item in ingredients:
+    for i, item in enumerate(ingredients):
         # デフォルトは100gまたは大さじ1
         default_amount = 100
         for key in calorie_dict.keys():
@@ -503,7 +503,7 @@ if st.button("🔥 カロリーを計算"):
             value=float(default_amount),
             step=1.0,
             format="%f",
-            key=f"amount_{item}"
+            key=f"amount_{item}_{i}"
         )
 
     total_calories = 0
