@@ -82,12 +82,13 @@ st.write("料理に関する質問をどうぞ！")
 api_key = st.secrets["AZURE_OPENAI_API_KEY"]
 endpoint = st.secrets["AZURE_OPENAI_ENDPOINT"]
 deployment_name = st.secrets["AZURE_OPENAI_DEPLOYMENT"]
+api_version = "2024-02-15-preview"
 
-# 新しいAzure OpenAIクライアントを作成
-client = openai.AzureOpenAI(
+# openai v1.0.0以降の新方式（グローバルで初期化）
+client = openai.OpenAI(
     api_key=api_key,
-    azure_endpoint=endpoint,
-    api_version="2024-02-15-preview"
+    base_url=f"{endpoint}/openai/deployments/{deployment_name}",
+    default_headers={"api-key": api_key}
 )
 
 # メインとサイドの2カラムを作成
@@ -97,6 +98,9 @@ answer = ""  # グローバルで初期化
 
 with main_col:
     cols = st.columns([2, 3, 1, 1, 1])  # 1番目のカラムを2倍、2番目を3倍の幅に
+    # 希望カロリー入力欄を追加
+    with cols[2]:
+        target_calorie = st.number_input("希望カロリー (kcal)", min_value=100, max_value=2000, value=600, step=50)
 
     with cols[0]:
         st.markdown(
@@ -144,15 +148,18 @@ with main_col:
     if user_question:
         with st.spinner("AIが考中..."):
             try:
-                prompt = f"""{user_question}（{num_people}人分、{difficulty}で教えて。料理に合うお勧めのデザートや飲み物も提案してください）"""
+                # 希望カロリーをプロンプトに反映
+                prompt = f"{user_question}（{num_people}人分、{difficulty}、{target_calorie}kcal前後で教えて。料理に合うお勧めのデザートや飲み物も提案してください）"
                 response = client.chat.completions.create(
-                    model=deployment_name,
                     messages=[
                         {
                             "role": "user",
                             "content": prompt
                         }
-                    ]
+                    ],
+                    model=deployment_name,
+                    extra_headers={"api-key": api_key},
+                    extra_query={"api-version": api_version}
                 )
                 answer = response.choices[0].message.content
                 st.write(f"AIの回答: {answer}")
@@ -441,18 +448,16 @@ with fav_col:
 # --- カロリー計算ボタン ---
 if st.button("🔥 カロリーを計算"):
     st.subheader("📊 カロリー詳細")
-    
-    # 材料リストを抽出（材料費算出と同じロジック）
+            match = re.search(pattern, answer, re.DOTALL | re.MULTILINE)
+
     ingredients = []
     if answer:
-        # パターン1: 「材料」セクションから抽出
         patterns = [
-            r"材料.*?\n((?:- .*\n)+)",           # - リスト形式
-            r"材料.*?\n((?:\d+\..*\n)+)",        # 1. 番号付きリスト
-            r"材料.*?\n((?:・.*\n)+)",           # ・ リスト形式
-            r"材料.*?[:：]\s*(.*?)(?:\n\n|\n作り方|\n手順|$)",  # : 以降の材料
+            r"材料.*?\n((?:- .+\n)+)",  # - リスト形式
+            r"材料.*?\n((?:\d+\. .+\n)+)",  # 1. 番号付きリスト
+            r"材料.*?\n((?:・.+\n)+)",  # ・ リスト形式
+            r"材料.*?[:：]\s*(.*?)(?:\n\n|\n作り方|\n手順|$)"  # : 以降の材料
         ]
-        
         for pattern in patterns:
             match = re.search(pattern, answer, re.DOTALL | re.MULTILINE)
             if match:
@@ -464,12 +469,19 @@ if st.button("🔥 カロリーを計算"):
                         if clean_line:
                             ingredients.append(clean_line)
                 break
-        
-        # パターンが見つからない場合のフォールバック
         if not ingredients:
-            food_keywords = ['肉', '野菜', '魚', '米', '麺', '卵', '豆腐', '油', '醤油', '味噌', '塩', '砂糖', 
+            food_keywords = [
+                '肉', '野菜', '魚', '米', '麺', '卵', '豆腐', '油', '醤油', '味噌', '塩', '砂糖',
+                '玉ねぎ', 'にんじん', 'じゃがいも', 'キャベツ', 'トマト', 'ピーマン'
+            ]
+            for line in answer.split('\n'):
+                line = line.strip()
+                if any(keyword in line for keyword in food_keywords):
+                    if not any(exclude in line for exclude in ['炒める', '煮る', '焼く', '切る', '作り方', '手順']):
+                        clean_line = re.sub(r'^[-・\d+\.\)]\s*', '', line)
+                        if clean_line and len(clean_line) < 50:
+                            ingredients.append(clean_line)
                            '玉ねぎ', 'にんじん', 'じゃがいも', 'キャベツ', 'トマト', 'ピーマン']
-            
             for line in answer.split('\n'):
                 line = line.strip()
                 if any(keyword in line for keyword in food_keywords):
@@ -478,92 +490,83 @@ if st.button("🔥 カロリーを計算"):
                         if clean_line and len(clean_line) < 50:
                             ingredients.append(clean_line)
 
-    # 材料の概算カロリー辞書（100gあたりのカロリー）
+    # 材料の概算カロリー辞書（100g/大さじ1あたりのカロリー）
     calorie_dict = {
-        # 肉類（100gあたり）
-        "豚肉": 263, "豚バラ": 395, "豚ロース": 263, "豚ひき肉": 221, "豚こま": 250,
-        "鶏肉": 200, "鶏もも": 253, "鶏むね": 191, "鶏ひき肉": 166, "手羽先": 211, "手羽元": 197,
-        "牛肉": 259, "牛バラ": 517, "牛ロース": 318, "牛ひき肉": 224, "牛切り落とし": 259,
-        "ベーコン": 405, "ハム": 196, "ソーセージ": 321, "ウインナー": 321,
-        
-        # 魚介類（100gあたり）
-        "魚": 150, "鮭": 139, "サバ": 247, "アジ": 121, "イワシ": 217, "タラ": 77,
-        "エビ": 82, "イカ": 88, "タコ": 76, "ホタテ": 72, "カニ": 65,
-        "ツナ缶": 267, "さば缶": 190, "鮭缶": 155,
-        
-        # 野菜類（100gあたり）
-        "玉ねぎ": 37, "にんじん": 36, "じゃがいも": 76, "キャベツ": 23, "トマト": 19,
-        "きゅうり": 14, "大根": 18, "白菜": 14, "ピーマン": 22, "パプリカ": 30,
-        "なす": 22, "ズッキーニ": 14, "かぼちゃ": 49, "ブロッコリー": 33, "カリフラワー": 27,
-        "ほうれん草": 20, "小松菜": 14, "チンゲン菜": 9, "レタス": 12, "サニーレタス": 16,
-        "もやし": 14, "豆苗": 31, "ネギ": 28, "長ネギ": 28, "万能ねぎ": 27,
-        "ニラ": 21, "生姜": 30, "にんにく": 134, "セロリ": 15, "アスパラ": 22,
-        
-        # きのこ類（100gあたり）
-        "しいたけ": 18, "えのき": 22, "しめじ": 18, "エリンギ": 24, "まいたけ": 16,
-        "マッシュルーム": 11, "なめこ": 15,
-        
-        # 豆類・豆腐製品（100gあたり）
-        "豆腐": 56, "厚揚げ": 150, "油揚げ": 386, "絹ごし豆腐": 56, "木綿豆腐": 72,
-        "納豆": 200, "大豆": 417, "小豆": 339, "いんげん豆": 333,
-        
-        # 穀物・麺類（100gあたり）
-        "米": 356, "白米": 356, "玄米": 350, "もち米": 359,
-        "パン": 264, "食パン": 264, "バゲット": 279, "ロールパン": 316,
-        "うどん": 105, "そば": 114, "そうめん": 127, "ラーメン": 149, "パスタ": 149,
-        "スパゲッティ": 149, "マカロニ": 149, "ペンネ": 149,
-        "小麦粉": 368, "片栗粉": 330, "パン粉": 373, "天ぷら粉": 349,
-        
-        # 卵・乳製品（100gあたり）
-        "卵": 151, "たまご": 151, "うずらの卵": 179,
-        "牛乳": 67, "豆乳": 46, "生クリーム": 433, "ヨーグルト": 62,
-        "バター": 745, "マーガリン": 758, "クリームチーズ": 346,
-        "チーズ": 339, "モッツァレラ": 276, "パルメザン": 475, "チェダー": 423,
-        
-        # 調味料（大さじ1あたり）
-        "醤油": 13, "味噌": 35, "塩": 0, "砂糖": 35, "上白糖": 35, "三温糖": 34,
-        "酢": 3, "米酢": 3, "穀物酢": 3, "黒酢": 5,
-        "みりん": 43, "料理酒": 16, "日本酒": 16,
-        "ごま油": 111, "サラダ油": 111, "オリーブオイル": 111, "ココナッツオイル": 111,
-        "ケチャップ": 18, "マヨネーズ": 84, "ソース": 20, "ウスターソース": 20,
+        # ...existing code...
     }
-    
+
+    # 材料ごとの量入力欄を表示
+    st.write("**材料ごとの量を入力してください（gまたは大さじ数）**")
+    ingredient_amounts = {}
+    for item in ingredients:
+        # デフォルトは100gまたは大さじ1
+        default_amount = 100
+        for key in calorie_dict.keys():
+            if key in item or item in key:
+                if key in ["醤油", "味噌", "酢", "みりん", "料理酒", "ケチャップ", "マヨネーズ", "ソース", "ごま油", "サラダ油", "オリーブオイル"]:
+                    default_amount = 1
+                break
+        ingredient_amounts[item] = st.number_input(f"{item} の量 (gまたは大さじ)", min_value=0.0, value=float(default_amount), step=1.0, format="%f")
+
     total_calories = 0
-    
-    if ingredients:
-        st.success(f"材料を {len(ingredients)} 個検出しました:")
-        
-        # カロリー一覧表を作成
-        st.write("**材料別カロリー一覧表：**")
-        
-        import pandas as pd
-        
-        table_data = []
-        for item in ingredients:
-            # 材料名からカロリーを推定
-            estimated_calories = 50  # デフォルトカロリー
-            matched_key = "その他"
-            serving_note = "推定量"
-            
-            # より柔軟なカロリーマッチング
-            for key, calories in calorie_dict.items():
-                if key in item or item in key:
-                    estimated_calories = calories
-                    matched_key = key
-                    # 調味料類は大さじ1、その他は100g基準
-                    if key in ["醤油", "味噌", "酢", "みりん", "料理酒", "ケチャップ", "マヨネーズ", "ソース"]:
-                        serving_note = "大さじ1"
-                    elif key in ["ごま油", "サラダ油", "オリーブオイル"]:
-                        serving_note = "大さじ1"
-                    else:
-                        serving_note = "100g"
-                    break
-            
-            total_calories += estimated_calories
-            
-            table_data.append({
-                "材料名": item,
-                "カロリー": f"{estimated_calories}kcal",
+    table_data = []
+    for item in ingredients:
+        estimated_calories = 50
+        matched_key = "その他"
+        serving_note = "100g"
+        for key, calories in calorie_dict.items():
+            if key in item or item in key:
+                estimated_calories = calories
+                matched_key = key
+                if key in ["醤油", "味噌", "酢", "みりん", "料理酒", "ケチャップ", "マヨネーズ", "ソース", "ごま油", "サラダ油", "オリーブオイル"]:
+                    serving_note = "大さじ1"
+                else:
+                    serving_note = "100g"
+                break
+        amount = ingredient_amounts.get(item, 0)
+        # カロリー計算（調味料は大さじ1あたり、それ以外は100gあたり）
+        if serving_note == "100g":
+            cal = estimated_calories * (amount / 100)
+        else:
+            cal = estimated_calories * amount  # 大さじ数
+        total_calories += cal
+        table_data.append({
+            "材料名": item,
+            "量": f"{amount}{'g' if serving_note=='100g' else '大さじ'}",
+            "カロリー": f"{cal:.1f}kcal",
+            "基準量": serving_note,
+            "マッチング": matched_key
+        })
+
+    import pandas as pd
+    df = pd.DataFrame(table_data)
+    st.dataframe(df, use_container_width=True)
+
+    st.markdown(
+        f"""
+        <div style="
+            background-color: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        ">
+            <h3 style="color: #ff9800; margin: 0;">
+                🔥 合計概算カロリー: {total_calories:.1f}kcal
+            </h3>
+            <p style="margin: 10px 0; color: #666;">
+                ({num_people}人分)
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    per_person_cal = total_calories / num_people if num_people > 0 else total_calories
+    st.info(f"一人当たりのカロリー: 約{per_person_cal:.1f}kcal")
+    st.warning("※ カロリーは概算です。実際の量や調理法で変動します。")
+    if not ingredients:
+        st.error("材料リストが見つかりませんでした。AIの回答に材料が含まれていない可能性があります。")
                 "基準量": serving_note,
                 "マッチング": matched_key
             })
